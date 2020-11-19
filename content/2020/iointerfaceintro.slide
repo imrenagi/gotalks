@@ -1,0 +1,178 @@
+# Merancang Kode dengan Golang IO Package 
+Bagian 1
+Summary: Merancang Kode dengan IO Package (Bagian 1)
+Tags: io
+
+Imre Nagi
+Cloud Platform Engineer, Gojek
+20 Nov 2020
+@imrenagi
+
+## Tonton Penjelasan Lengkap 
+
+.link https://www.youtube.com/watch?v=6IAQ5uWs9kM Merancang Kode Dengan Golang IO Interface
+
+## IO Package
+
+Menyediakan antarmuka (_interface_) untuk operasi I/O.
+
+```
+
+import "io"
+```
+
+## Streaming di Golang
+
+Operasi IO menggunakan _streams of bytes_ sebagai data model.
+
+.image iointerfaceintro/streaming.png _ 800
+.caption _Streaming_ _in_ _GO_ by [[https://medium.com/learning-the-go-programming-language/streaming-io-in-go-d93507931185][Vladimir Vivien]]
+
+
+## Antarmuka io.Writer
+
+Antarmuka untuk metode penulisan dasar
+
+```
+
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+
+p -> streams of bytes
+n -> panjang data yang berhasil ditulis
+err -> error ketika penulisan
+```
+
+## Antarmuka io.Reader
+
+Antarmuka untuk metode pembacaan dasar
+
+```
+
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+p -> streams of bytes
+n -> panjang data yang berhasil dibaca
+err -> error ketika penulisan
+```
+
+`Read()` akan mengembalikan `io.EOF` error ketika seluruh data telah dibaca.
+```
+
+p := make([]byte, 4)
+n, err := reader.Read(p)
+if err != nil {
+  if err == io.EOF { //seluruh data telah dibaca
+		fmt.Println(string(p[:n])) 
+		break
+	}
+}
+```
+
+## Implementasi io.Writer & io.Reader
+
+Terdapat beberapa package golang yang menggunakan antarmuka `io.Reader` dan `io.Writer`
+
+- `os.File`
+
+```
+
+  f, _ := os.Create("aFile.txt")
+  f.Write([]byte("hello world"))
+```
+
+- `strings.NewReader()`
+
+```
+
+  func NewReader(s string) *Reader
+```
+
+
+dan lain-lain.
+ 
+## Menggunakan io.Reader
+
+.play iointerfaceintro/reader/main.go /STARTMAIN1/,/STOPMAIN1/
+
+## Menggunakan io.Writer
+
+.play iointerfaceintro/writer/main.go /STARTMAIN1/,/STOPMAIN1/
+
+## Merancang Kode Dengan Antarmuka IO
+
+## Contoh Data model
+
+.code iointerfaceintro/design/naivemain/main.go /STARTPERSON/,/STOPPERSON/
+
+## Menulis Data ke File (Solusi Naif)
+
+Encode data menjadi json _array of bytes_, lalu gunakan `os.File` sebagai medium penulisan.
+
+.play iointerfaceintro/design/naivemain/main.go /STARTMAIN/,/STOPMAIN/
+
+## Menulis Data ke File (cont'd)
+
+Bagaimana jika `Person` ingin dituliskan ke beberapa medium berbeda?
+
+.code iointerfaceintro/design/naivemain/main.go /STARTINEFFECTIVESAMPLE/,/STOPINEFFECTIVESAMPLE/
+
+## Menulis Data ke File (Better Solution)
+
+_Pass_ antarmuka IO (`io.Writer`) sebagai parameter fungsi tipe `Person`
+
+.code iointerfaceintro/design/fixedmain/main.go /STARTPERSONWRITE/,/STOPPERSONWRITE/
+
+_accept interface, return struct_
+
+## Menulis Data ke File (Better Solution) - (cont'd)
+
+Instance `Person` kini dapat menerima berbagai macam `Writer`
+
+.code iointerfaceintro/design/fixedmain/main.go /STARTMAINFIXED/,/STOPMAINFIXED/
+
+## Cloud Storage Sebagai Media Penyimpanan
+
+## Menggunakan Google Cloud Storage
+
+import google cloud storage golang SDK
+
+.code iointerfaceintro/design/blob/gcs.go /STARTIMPORT/,/STOPIMPORT/
+
+gunakan sebuah fungsi yang mengembalikan antarmuka  `io.WriteCloser`
+
+.code iointerfaceintro/design/blob/gcs.go /STARTGCS/,/STOPGCS/
+
+## Mengunggah File ke Cloud Storage
+
+Inisiasi _struct_ gcs dan _pass_ `gcs.Writer()` sebagai input untuk fungsi `Write()`
+
+.code iointerfaceintro/design/fixedmain/main.go /STARTMAINGCS/,/STOPMAINGCS/
+
+## Menggunakan Amazon S3
+
+Berbeda dengan Go SDK untuk GCS, Go SDK untuk AWS s3 tidak memiliki fungsi yang mengembalikan `io.Writer` and `io.Closer`.
+
+.code iointerfaceintro/design/blob/aws.go /STARTAWSS3/,/STOPAWSS3/
+
+`out` merupakan `aws.PutObjectOutput{}` yang tidak mengimplementasikan `io.Writer` dan `io.Closer`.
+
+Apa yang bisa kita lakukan?
+
+## Implementasi AWS S3 Client Dengan IO Interface
+
+AWS s3 client akan mengembalikan antarmuka `io.WriteCloser`
+
+.code iointerfaceintro/design/blob/aws.go /STARTAWSOBJ/,/STOPAWSOBJ/
+
+Kenapa `return a`?
+
+## Implementasi AWS S3 Client Dengan IO Interface (cont'd)
+
+Agar dapat dianggap sebagai `io.WriteCloser`, maka `awsObj` harus mengimplementasi setidaknya fungi `Write()` dan `Close()`.
+
+.code iointerfaceintro/design/blob/aws.go /STARTIOIMPLEMENTATION/,/STOPIOIMPLEMENTATION/
+
