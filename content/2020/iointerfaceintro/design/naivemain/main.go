@@ -41,6 +41,8 @@ func incorrectsample() {
 	n2, err := f2.Write(b)
 	// handling error
 	//STOPINEFFECTIVESAMPLE, OMIT
+
+	fmt.Println(n1, n2, err)
 }
 
 type People []Person
