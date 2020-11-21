@@ -1,0 +1,129 @@
+# Golang Konkurensi Primitif
+Mengenal Primitif Konkurensi di Golang
+Summary: Introduction to golang primitive for concurrency
+Tags: concurrency
+
+Imre Nagi
+Cloud Platform Engineer, Gojek
+21 Nov 2020
+https://golang-talks.imrenagi.com
+@imrenagi
+
+## Goroutine
+
+Goroutine adalah _lightweight thread_ yang dikelola oleh runtime Go.
+
+```
+
+go f(x, y, z)
+```
+
+memulai goroutine untuk fungsi `f(x,y,z)`
+
+`main()` merupakan sebuah goroutine.
+
+Akses ke _shared memory_ oleh beberapa goroutine **harus** tersinkronisasi.
+
+## Contoh Goroutine (1)
+
+Perhatikan kenapa "hello" dan "world" tidak muncul dalam urutan yang sama dengan kode?
+
+.play concurrency101/simplesample/main.go /START/,/STOP/
+
+## Contoh Goroutine (2)
+
+Ada berapa "world" yang muncul dengan program ini?
+
+.play concurrency101/simplesample2/main.go /START/,/STOP/
+
+## Channel
+
+Channels adalah sebuah kanal yang digunakan oleh konkuren goroutine untuk berkomunikasi.
+
+```
+
+goroutine A -> channel -> goroutine B
+```
+
+`goroutine` A mengirim data X melalui _channel_ untuk dikonsumsi oleh `goroutine` B.
+
+```go
+
+ch := make(chan int) //inisialisasi channel
+
+ch <- v    // Kirim v ke channel ch.
+v := <-ch  // Menerima dari ch, dan
+           // set value ke v.
+```
+
+## Contoh Channel
+
+.play concurrency101/channel/main.go /START/,/STOP/
+
+## Blocking Channel
+
+Secara _default_, pengiriman (_send_) dan penerimaan (_receive_) akan terkunci/stagnan hingga sisi yang lain siap untuk menerima atau mengirimkan data. 
+
+.play concurrency101/blockingchannel/main.go
+
+## Blocking Channel (cont'd)
+
+Menjalankan goroutine untuk mengkonsumsi data dari _channel_ `c`
+
+.play concurrency101/blockingchannel2/main.go
+
+## Buffered Channel
+
+_Channel_ dapat memiliki buffer. 
+* Pengiriman data terkunci ketika _channel_ penuh
+* Penerimaan data terkunci ketika _channel_ kosong
+
+.play concurrency101/bufferedchannel/main.go /^func main/,/^}/
+
+_Channel_ dengan jumlah _buffer_ 0 disebut _Rendezvous Channel_
+
+## Anonymous Function
+
+Sebuah function yang didefinisikan tanpa nama fungsi yang mengacu ke fungsi tersebut
+
+.play concurrency101/anonymousfunc/main.go /START/,/STOP/ HLxx
+
+## Range dan Close
+
+Pengirim (_sender_) bisa menutup (_close_) _channel_ untuk mengindikasikan tidak ada lagi _value_ untuk dikirimkan.
+
+Penerima (_receiver_) dapat mengecek apakah sebuah _channel_ sudah ditutup.
+
+```
+
+v, ok := <-ch
+```
+
+* `ok` bernilai `false` jika _channel_ sudah ditutup
+
+---
+
+Perulangan `for i := range ch` menerima value dari channel _ch_ hingga _channel_ ditutup
+
+```
+
+for i := range ch {
+  // do something ...
+}
+```
+
+**Note**: Hanya sender yang seharusnya menutup _channel_. Mengirimkan data ke _channel_ yang sudah ditutup dapat menyebabkan _panic_.
+
+## Select 
+
+_Select_ membiarkan sebuah goroutine meununggu untuk beberapa operasi komunikasi.
+
+_select_ terkunci hingga salah satu kondisi terpenuhi secara random. 
+
+.play concurrency101/select/main.go /START/,/STOP/ HL12
+
+## Default Selection
+
+kondisi _default_ pada sebuah `select` akan dieksekusi ketika tidak ada kondisi lain yang terpenuhi.
+
+.play concurrency101/defaultselect/main.go /START/,/STOP/ HL13
