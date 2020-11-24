@@ -18,7 +18,7 @@ func player(name string, table chan *Ball, done chan *Ball) { //accept done chan
 			if v%11 == 0 {    //random condition to drop ball // HL1
 				log.Println(name, "drop the ball")
 				done <- ball
-				return
+				return // HL1
 			}
 
 			ball.hits++
@@ -37,7 +37,7 @@ func player(name string, table chan *Ball, done chan *Ball) { //accept done chan
 //STARTBALL, OMIT
 type Ball struct {
 	hits       int
-	lastPlayer string
+	lastPlayer string // HL3
 }
 
 //STOPBALL, OMIT
