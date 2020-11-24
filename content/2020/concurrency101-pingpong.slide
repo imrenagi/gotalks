@@ -1,0 +1,55 @@
+# Konkuren Ping-Pong
+Implementasi Konkurensi Sambil Bermain Ping-Pong
+Summary: Demonstrating a concurrency via ping-pong game
+Tags: concurrency, pingpong
+
+Imre Nagi
+Cloud Platform Engineer, Gojek
+24 Nov 2020
+@imrenagi
+
+## Ping-pong Sederhana
+
+Buat sebuah aplikasi sederhana dengan kriteria:
+
+* 2 pemain ping-pong saling mengembalikan bola
+* Permainan berhenti setelah 1 detik
+* Gunakan konkurensi dengan 1 channel
+
+## Ping-pong Sederhana (Solusi)
+
+.play concurrency101-pingpong/naive/main.go /START/,/STOP/
+
+.link https://talks.golang.org/2013/advconc.slide#6 source
+
+## Ping-pong Dengan Wasit
+
+Dengan solusi sebelumnya, tambahkan fitur:
+
+* Goroutine untuk Referree/Wasit
+* Wasit akan mengambil bola ketika salah satu pemain tidak dapat mengembalikan bola ke lawan
+* Permainan selesai, wasit menentukan pemenang.
+
+## Ping-pong Dengan Wasit (Solusi)
+
+Menambakan `lastPlayer` untuk menentukan siapa yang terakhir kali berhasil mengembalikan bola
+
+.code concurrency101-pingpong/referree/main.go /STARTBALL/,/STOPBALL/
+
+## Ping-pong Dengan Wasit (Solusi Cont'd)
+
+.code concurrency101-pingpong/referree/main.go /STARTPLAYER/,/STOPPLAYER/ HL1
+
+## Ping-pong Dengan Wasit (Solusi Cont'd)
+
+`referree` mengakhiri goroutinenya ketika menerima bola di _channel_ `done`
+
+.code concurrency101-pingpong/referree/main.go /STARTREFERREE/,/STOPREFERREE/ HL2
+
+## Ping-pong Dengan Wasit (Solusi Cont'd)
+
+Penambahan _channel_ `done` untuk menandai akhir sebuah ronde
+
+.play concurrency101-pingpong/referree/main.go /STARTMAIN/,/STOPMAIN/
+
+## Multi Round Ping-Pong
