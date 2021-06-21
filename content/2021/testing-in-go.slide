@@ -1,0 +1,137 @@
+# Writing Better Test in Go
+Summary: Writing Better Test in Go
+Tags: testing
+
+Imre Nagi
+Cloud Platform Engineer, Gojek
+Google Developer Expert Cloud
+26 June 2021
+@imrenagi
+
+
+## What is unit testing?
+ 
+Low-level testing that focuses on
+* checking the behavior of implemented functionality
+
+Operates on:
+* Method
+* Classes
+* Small number of collaborating classes
+
+## Writing test in Go
+
+Use `testing` package and do assertion
+
+.code testing/simple/main.go /START/,/STOP/ 
+
+## Unit Testing Principles
+
+* Simplicity
+* **Understandability**
+* Essentiality
+* Single purpose
+* Behavior First
+* **Maintainability**
+* Determinism
+* Independence
+* Failability
+* Comprehensiveness
+* **Speed**
+
+## Maintainability
+
+## Avoid Duplication
+
+CleanUp() function in go
+
+## Avoid Conditional Logic in Test Code
+
+Conditional logic is hard to maintain
+
+```
+func TestGetData_Contains10() {
+  data := GetData()
+  var bool found
+  for _, d := range data {
+    if d == 10 {
+      found = true
+    }
+  }
+
+  if !bool {
+    t.Fail()
+  }
+}
+```
+
+another example is by checking two different value
+
+```
+  assert.Contains()
+```
+
+## Table Test Driven
+
+Better for testing simple function
+
+## Using SubTest
+
+* separating the test based on its test clases
+* preparing different setup for collaborators for Entity Under Test
+
+## Understandability
+
+## Make test self-documenting
+
+xxxxx
+
+## Determinism
+
+## Test should not fail at random
+
+Isolate and remove source of nondeterminism
+
+* Database call
+* Third-party API call
+
+## Creating Mock in Go
+
+Use mock package from testify
+Don't need to use generator. its simple.
+
+## Verify Whats Being Called
+
+important to check what is being called by the function
+
+Mock.MatchBy()
+
+## Mocking third party API with no interface
+
+third party API in go most of the time doesnt come with interface.
+
+common mistake: making unnecessary abstraction just for wrapping the third party, but never really test logic behaviour using that API
+
+
+
+## Failability
+
+## Ensure test can fail
+
+* Dont write test without assertion
+* Unfinished tests should always fail
+
+## Speed
+
+## Watching for "sleeping nails"
+
+<- time.After(10 * time.Second)
+
+## Use test doubles if test rely on expensive resources
+
+## Using tag for running excluding integration test
+
+don't
+
+should use t.Skip()
+* so that people might notice a test was being skipped 
