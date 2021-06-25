@@ -26,7 +26,7 @@ func TestFinalize(t *testing.T) {
 	m := new(PaymentServiceMock)
 
 	m.On("GenerateInvoice", mock.Anything). // HL
-						Return("example.com/invoices/1", nil) // HL
+						Return(&Invoice{URL: "example.com/invoices/1"}, nil) // HL
 
 	orderService := api.OrderService{PaymentService: m}
 	url, err := orderService.Finalize("1234")
@@ -57,7 +57,7 @@ func TestFinalize_WithVerification(t *testing.T) {
 	m := new(PaymentServiceMock) // OMIT
 
 	m.On("GenerateInvoice", "1234"). // HL
-						Return("example.com/invoices/1", nil)
+						Return(&Invoice{URL: "example.com/invoices/1"}, nil)
 
 	orderService := api.OrderService{PaymentService: m}
 	url, err := orderService.Finalize("1234") // HL
