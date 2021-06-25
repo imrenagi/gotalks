@@ -1,5 +1,5 @@
 //START, OMIT
-package random_test // Avoid testing code to be bundled in prod
+package simple_test // Avoid testing code to be bundled in prod
 
 import (
 	"testing"
@@ -7,8 +7,8 @@ import (
 
 func TestRandom(t *testing.T) { // Test... prefix is mandatory
 	if 2 != 3 {
-		t.Fail()
-		t.Log("2 is not equal to 3")
+		t.Fail()                     // Test must have reason to fail // HL
+		t.Log("2 is not equal to 3") // HL
 	}
 }
 

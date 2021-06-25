@@ -25,113 +25,242 @@ Use `testing` package and do assertion
 
 .code testing/simple/main.go /START/,/STOP/ 
 
+_Only idealist writes test this way :p_
+
 ## Unit Testing Principles
 
+* **Maintainability**
+* **Determinism**
+* Speed
 * Simplicity
-* **Understandability**
+* Understandability
 * Essentiality
 * Single purpose
 * Behavior First
-* **Maintainability**
-* Determinism
 * Independence
 * Failability
 * Comprehensiveness
-* **Speed**
+
 
 ## Maintainability
 
-## Avoid Duplication
+## Conditional logic is hard to maintain
 
-CleanUp() function in go
+Avoid putting `if` inside test function
 
-## Avoid Conditional Logic in Test Code
+.code testing/simple/contains.go /STARTMAP/,/STOPMAP/
 
-Conditional logic is hard to maintain
+## Use assertion framework
 
-```
-func TestGetData_Contains10() {
-  data := GetData()
-  var bool found
-  for _, d := range data {
-    if d == 10 {
-      found = true
-    }
-  }
+Use `testify` as assertion framework
 
-  if !bool {
-    t.Fail()
-  }
-}
-```
+.code testing/simple/contains.go /STARTMAP2/,/STOPMAP2/
 
-another example is by checking two different value
+People expect to understand your code from reading to tests
 
-```
-  assert.Contains()
-```
+## Testing Is Not About Achieving 100% Code Coverage
+
+* Its about the input space (test cases)
+* Black box testing
+  * Don't know what the internal implementation looks like
+  * Test based on the business requirements
+* White box testing
+  * Know what the internal implementation looks like
+  * You should know the input spaces for the function
+
+**But how do we manage all of the test cases?**
+
+## Testing Simple function
+
+.code testing/math/div.go /START/,/STOP/
+
+Should we manage test cases this way?
+
+.code testing/math/div_test.go /START/,/STOP/
 
 ## Table Test Driven
 
-Better for testing simple function
+Better way for documenting the test cases
+
+.code testing/math/div_test.go /STARTTT/,/STOPTT/
+
+Can you spot what could be confusing here?
 
 ## Using SubTest
 
-* separating the test based on its test clases
-* preparing different setup for collaborators for Entity Under Test
+Helps you manage the test under the same logical group
 
-## Understandability
+.code testing/math/div_test.go /STARTSUB/,/STOPSUB/
 
-## Make test self-documenting
+## Using Subtest (2)
 
-xxxxx
+Improved test table with subtest
+
+.code testing/math/div_test.go /STARTTT2/,/STOPTT2/
+
+## Test Table vs Sub Test
+
+* Use test-table for simple input/output function with a lot of test cases
+
+* Use subtest when you have complex fixture/setup for each test cases
+  * preparing for test double behavior (e.g mock)
+  * mock can be behave normally or return error
 
 ## Determinism
 
-## Test should not fail at random
+## Test Should Not Fail at Random
 
-Isolate and remove source of nondeterminism
+Isolate and remove source of non-determinism
 
-* Database call
-* Third-party API call
+* Network issue
+  * Database call
+  * Third-party API call
 
-## Creating Mock in Go
+* Random Numbers
 
-Use mock package from testify
-Don't need to use generator. its simple.
+## DB Call
+
+Assuming we have database repository as shown below:
+
+.code testing/api/db.go /START/,/STOP/
+
+Why not writing integration test which directly calls DB?
+
+## Test Doubles
+
+Not a real object, but look and behave like the real one.
+
+* **Mock**
+* Fake
+* Spy
+* Stub
+
+## Mocking Database Call
+
+Factory for returning the mock
+
+.code testing/api/db_test.go /STARTDB/,/STOPDB/
+
+## Mocking Database Call (cont'd)
+
+Inject mock instead of the real db connection
+
+.code testing/api/db_test.go /STARTTEST/,/STOPTEST/
+
+## Mocking Collaborator / Other API Services
+
+Let's say you are developing an order service which has dependency to payment service. 
+
+Payment Service has been implemented in another world. But you have no control over this service. The least you know is the interface.
+
+.code testing/api/order_service.go /STARTPAYMENTINTERFACE/,/STOPPAYMENTINTERFACE/
+
+## Entity Under Test 
+
+Now you want to test `Finalize()` method of `OrderService`
+
+.code testing/api/order_service.go /STARTORDER/,/STOPORDER/
+
+How to control when the `o.PaymentService.GenerateInvoice()` should success or return error?
+
+## Creating Mock
+
+Use mock package from `github.com/stretchr/testify/mock`. It is simple. So no need to use generator. 
+
+.code testing/api/order_service_test.go /STARTMOCK/,/STOPMOCK/
+
+## Writing the Test
+
+We define how mock should behave on the given situation
+
+.code testing/api/order_service_test.go /STARTFINALIZE/,/STOPFINALIZE/
+
+Control mock to return error
+
+.code testing/api/order_service_test.go /STARTFINALIZEERROR/,/STOPFINALIZEERROR/
+
+## More advance mock features
+
+* Limiting how many times mock returns data
+
+```
+   m.On("GenerateInvoice", mock.Anything).    
+      Return("example.com/invoices/1", nil).
+      Times(2)
+```
+
+* Setting response delay to a mock. Useful for context cancelation/timeout testing
+
+```
+   m.On("GenerateInvoice", mock.Anything).    
+      Return("example.com/invoices/1", nil).
+      After(5 * time.Second) //delay 5 second
+```
+
+* Running a side effect before mock returns
+
+```
+   m.On("GenerateInvoice", mock.Anything).    
+      Return("example.com/invoices/1", nil).
+      Run(func(args Arguments) {
+        fmt.Println("executing side effect here")
+      })
+```
 
 ## Verify Whats Being Called
 
-important to check what is being called by the function
+It is also important to check whether parameters given to the mock is correct
 
-Mock.MatchBy()
+.code testing/api/order_service_test.go /STARTVERIFICATION/,/STOPVERIFICATION/
+
+## Complex Verification
+
+What if we have more complex object to be verified, but we just need to verify small part of it?
+
+.code testing/api/order_service.go /STARTLOCATION/,/STOPLOCATION/
+
+use `mock.MatchedBy()` to check against the args
+
+.code testing/api/order_service_test.go /STARTCOMPLEXVER/,/STOPCOMPLEXVER/
 
 ## Mocking third party API with no interface
 
-third party API in go most of the time doesnt come with interface.
+Most of the time, third party API in go doesn't come with interface.
 
-common mistake: making unnecessary abstraction just for wrapping the third party, but never really test logic behaviour using that API
+.code testing/api/third_party.go /STARTUSERSERVICE/,/STOPUSERSERVICE/
 
+## Duck Typing
 
+_If it quacks like a duck, it is a duck_
 
-## Failability
+No need for explicitly saying that a struct is implementing an interface, to act as that interface.
 
-## Ensure test can fail
+## Creating an Interface Third Party
 
-* Dont write test without assertion
-* Unfinished tests should always fail
+AWS S3 client has a lot of methods. Let's pick the method that we **only** use and make an interface.
 
-## Speed
+.code testing/api/third_party.go /STARTUPLOADER/,/STOPUPLOADER/
 
-## Watching for "sleeping nails"
+Change the association on `UserService`
 
-<- time.After(10 * time.Second)
+.code testing/api/third_party.go /STARTNEWSERVICE/,/STOPNEWSERVICE/
 
-## Use test doubles if test rely on expensive resources
+We know that `aws.S3.Client` satisfies this interface. Hence, we can use it during runtime.
 
-## Using tag for running excluding integration test
+## Uploader Mock
 
-don't
+Same as before...
 
-should use t.Skip()
-* so that people might notice a test was being skipped 
+.code testing/api/third_party_test.go /STARTMOCKS3/,/STOPMOCKS3/
+
+## Implement the Test
+
+Same as before
+
+.code testing/api/third_party_test.go /STARTTEST/,/STOPTEST/
+
+## Slide
+
+Can be downloaded from 
+
+https://golang-talks.imrenagi.com
